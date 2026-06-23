@@ -6,8 +6,8 @@ client = OpenAI(api_key=api_key)
 
 
 def ask_llm(
-    user: str,
-    system: str,
+    user_content: str,
+    system_content: str,
     model: str = model_name,
     temperature: float = 0.1,
     max_tokens: int = 2000,
@@ -21,8 +21,8 @@ def ask_llm(
             temperature=temperature,
             max_completion_tokens=max_tokens,
             messages=[
-                {'role': 'system', 'content': system},
-                {'role': 'user', 'content': user}
+                {'role': 'system', 'content': system_content},
+                {'role': 'user', 'content': user_content}
             ]
         )
 
