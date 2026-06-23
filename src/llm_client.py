@@ -1,5 +1,6 @@
 from openai import OpenAI
 from load_env import model_name, api_key
+from err_handler import handle_openai_err
 
 client = OpenAI(api_key=api_key)
 
@@ -13,14 +14,19 @@ def ask_llm(
 
 
 ) -> str:
-    completions = client.chat.completions.create(
-        model = model,
-        temperature=temperature,
-        max_completion_tokens=max_tokens,
-        messages=[
-            {'role': 'system', 'content': system},
-            {'role': 'user', 'content': user}
-        ]
-    )
+    try:
 
-    return completions.choices[0].message.content
+        completions = client.chat.completions.create(
+            model = model,
+            temperature=temperature,
+            max_completion_tokens=max_tokens,
+            messages=[
+                {'role': 'system', 'content': system},
+                {'role': 'user', 'content': user}
+            ]
+        )
+
+        return completions.choices[0].message.content
+    
+    except Exception as e:
+        return handle_openai_err(e)
