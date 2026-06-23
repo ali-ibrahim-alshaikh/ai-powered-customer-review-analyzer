@@ -9,7 +9,7 @@ def ask_llm(
     user_content: str,
     system_content: str,
     model: str = model_name,
-    temperature: float = 0.1,
+    temperature: float = 0.5,
     max_tokens: int = 2000,
 
 
