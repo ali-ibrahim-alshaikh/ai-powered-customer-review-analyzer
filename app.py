@@ -241,15 +241,12 @@ with st.sidebar:
     need_summary   = st.checkbox("✦ Review Summary",     value=True)
     need_sentiment = st.checkbox("✦ Sentiment Analysis", value=True)
 
-    st.markdown('<div class="sidebar-section">Row Limit</div>', unsafe_allow_html=True)
-    row_limit = st.number_input(
-        "Max rows to analyze",
-        min_value=1,
-        max_value=100000,
-        value=10,
-        step=1,
-        help="Limit rows to control API cost."
-    )
+    st.markdown('<div class="sidebar-section">Row Range</div>', unsafe_allow_html=True)
+    row_start = st.number_input("From row", min_value=1, max_value=100000, value=1, step=1)
+    row_end   = st.number_input("To row",   min_value=1, max_value=100000, value=10, step=1)
+
+    if row_end < row_start:
+        st.error("'To row' must be greater than 'From row'.")
 
 
 # ─── Main area ────────────────────────────────────────────────────────────────
@@ -285,7 +282,8 @@ if uploaded_file:
         st.stop()
 
     total_rows   = len(raw_df)
-    analyze_rows = min(row_limit, total_rows)
+    row_end      = min(row_end, total_rows)
+    analyze_rows = max(0, row_end - row_start + 1)
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -314,7 +312,7 @@ if uploaded_file:
             st.stop()
 
         client   = OpenAI(api_key=api_key_input)
-        df_work  = raw_df.head(analyze_rows).copy()
+        df_work = raw_df.iloc[row_start - 1 : row_end].copy()
         topics, summaries, sentiments = [], [], []
 
         st.markdown("#### Analyzing reviews...")
