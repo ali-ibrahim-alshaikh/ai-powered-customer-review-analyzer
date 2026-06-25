@@ -195,25 +195,14 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-section">Row Limit</div>', unsafe_allow_html=True)
     
-    if "row_limit" not in st.session_state:
-        st.session_state["row_limit"] = 10
-
-    def sync_slider():
-        st.session_state["row_limit"] = st.session_state["slider_val"]
-
-    def sync_input():
-        st.session_state["row_limit"] = st.session_state["input_val"]
-
-    st.slider("Max rows to analyze", min_value=1, max_value=100000,
-            key="slider_val", value=st.session_state["row_limit"],
-            on_change=sync_slider, help="Limit rows to control API cost.")
-
-    st.number_input("Or type a number directly", min_value=1, max_value=100000,
-                    key="input_val", value=st.session_state["row_limit"],
-                    step=1, on_change=sync_input)
-
-    row_limit = st.session_state["row_limit"]
-
+    row_limit = st.number_input(
+    "Max rows to analyze",
+    min_value=1,
+    max_value=100000,
+    value=10,
+    step=1,
+    help="Limit rows to control API cost."
+)
 
 # ─── Main area ────────────────────────────────────────────────────────────────
 st.markdown("""
