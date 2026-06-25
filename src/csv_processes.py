@@ -7,7 +7,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).parent.parent
 
 data_file_path = PROJECT_ROOT / 'data' / 'customer_review.csv'
-outputs_file_path = PROJECT_ROOT / 'outputs'
+outputs_files_path = PROJECT_ROOT / 'outputs'
 
 
 check_csv_file(data_file_path)
@@ -20,12 +20,18 @@ if df.empty:
 df = df.head(3)
 
 while True:
-    name_new_file = input('Enter a name for the new file: ')
-    if name_new_file not in outputs_file_path:
+    name_new_file = input('Enter a name for the new file: ').strip()
+    
+    if not name_new_file.endswith('.csv'):
+        name_new_file += '.csv'
+
+    output_file_path = outputs_files_path / name_new_file
+
+    if output_file_path.exists():
+        print('This name already exists, try another one.')
+    else:
         print(f'The {name_new_file} was created')
         break
-    else:
-        print('This name already exists, try another one.')
 
 def create_customer_reviews_analyzed_file(
         need_topics:bool,
@@ -73,7 +79,7 @@ def create_customer_reviews_analyzed_file(
         df['sentiment'] = sentiments
 
     df.to_csv(
-        outputs_file_path / file_name,
+        outputs_files_path / file_name,
         index=False
     )
 
