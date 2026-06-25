@@ -1,8 +1,8 @@
-from prompt_variables import *
+from src.prompt_variables import *
 from pathlib import Path
-from err_handler import check_csv_file
-from llm_client import ask_llm
+from src.llm_client import ask_llm
 import pandas as pd
+
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -10,34 +10,39 @@ data_file_path = PROJECT_ROOT / 'data' / 'customer_review.csv'
 outputs_files_path = PROJECT_ROOT / 'outputs'
 
 
-check_csv_file(data_file_path)
 
-df = pd.read_csv(data_file_path)
 
-if df.empty:
-    raise ValueError("CSV file has columns but no rows.")
+def read_csv(data_path):
+    df = pd.read_csv(data_path)
+
+    if df.empty:
+        raise ValueError("CSV file has columns but no rows.")
+            
+    df = df.head(3)
+    return df
+
+def get_output_filename():
+
+    while True:
+        name_new_file = input('Enter a name for the new file: ').strip()
         
-df = df.head(3)
+        if not name_new_file.endswith('.csv'):
+            name_new_file += '.csv'
 
-while True:
-    name_new_file = input('Enter a name for the new file: ').strip()
-    
-    if not name_new_file.endswith('.csv'):
-        name_new_file += '.csv'
+        output_file_path = outputs_files_path / name_new_file
 
-    output_file_path = outputs_files_path / name_new_file
+        if output_file_path.exists():
+            print('This name already exists, try another one.')
+        else:
+            print(f'The {name_new_file} was created')
+            return name_new_file
 
-    if output_file_path.exists():
-        print('This name already exists, try another one.')
-    else:
-        print(f'The {name_new_file} was created')
-        break
-
-def create_customer_reviews_analyzed_file(
+def analyze_review(
         need_topics:bool,
         need_summaries:bool,
         need_sentiment:bool,
-        file_name:str = name_new_file
+        df
+        
 ):
 
     topics = []
@@ -78,8 +83,9 @@ def create_customer_reviews_analyzed_file(
     if need_sentiment:
         df['sentiment'] = sentiments
 
+def save_csv(df, output_file_name):
     df.to_csv(
-        outputs_files_path / file_name,
+        outputs_files_path / output_file_name,
         index=False
     )
 

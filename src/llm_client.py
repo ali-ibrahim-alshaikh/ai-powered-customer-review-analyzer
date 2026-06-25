@@ -1,6 +1,6 @@
 from openai import OpenAI
-from load_env import model_name, api_key
-from err_handler import handle_openai_err
+from src.load_env import model_name, api_key
+from src.error_handler import handle_openai_err
 
 client = OpenAI(api_key=api_key)
 
