@@ -133,7 +133,7 @@ iframe { border-radius: 12px !important; }
 }
 .stProgress > div > div { background: linear-gradient(90deg, var(--accent), var(--accent2)) !important; border-radius: 4px; }
 [data-testid="stAlert"] { border-radius: 10px !important; }
-#MainMenu, header, footer { visibility: hidden; }
+#MainMenu, footer { visibility: hidden; }
 .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
 </style>
 """, unsafe_allow_html=True)
