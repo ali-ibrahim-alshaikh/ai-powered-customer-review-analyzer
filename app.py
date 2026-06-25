@@ -194,10 +194,25 @@ with st.sidebar:
     need_sentiment = st.checkbox("✦ Sentiment Analysis", value=True)
 
     st.markdown('<div class="sidebar-section">Row Limit</div>', unsafe_allow_html=True)
-    row_limit = st.slider("Max rows to analyze", min_value=1, max_value=100000, value=10,
-                          help="Limit rows to control API cost.")
-    row_limit = st.number_input("Or type a number directly", min_value=1, max_value=100000,
-                                value=row_limit, step=1)
+    
+    if "row_limit" not in st.session_state:
+        st.session_state["row_limit"] = 10
+
+    def sync_slider():
+        st.session_state["row_limit"] = st.session_state["slider_val"]
+
+    def sync_input():
+        st.session_state["row_limit"] = st.session_state["input_val"]
+
+    st.slider("Max rows to analyze", min_value=1, max_value=100000,
+            key="slider_val", value=st.session_state["row_limit"],
+            on_change=sync_slider, help="Limit rows to control API cost.")
+
+    st.number_input("Or type a number directly", min_value=1, max_value=100000,
+                    key="input_val", value=st.session_state["row_limit"],
+                    step=1, on_change=sync_input)
+
+    row_limit = st.session_state["row_limit"]
 
 
 # ─── Main area ────────────────────────────────────────────────────────────────
