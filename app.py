@@ -248,7 +248,7 @@ if uploaded_file:
         st.markdown(f'<div class="card"><div class="card-label">Columns</div><div class="card-value">{len(raw_df.columns)}</div></div>', unsafe_allow_html=True)
 
     with st.expander("Original Data Preview", expanded=True):
-        st.dataframe(raw_df, use_container_width=True, height=220)
+        st.dataframe(raw_df, use_container_width=True, height=220, hide_index=False)
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
