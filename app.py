@@ -14,12 +14,12 @@ st.set_page_config(
     initial_sidebar_state="auto",
 )
 
-# ─── Load env (works locally; on Streamlit Cloud use Secrets) ─────────────────
+# ─── Load env ─────────────────────────────────────────────────────────────────
 load_dotenv()
 API_KEY    = os.getenv("OPENAI_API_KEY", "")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 
-# ─── Prompt loading — always relative to THIS file ────────────────────────────
+# ─── Prompt loading ───────────────────────────────────────────────────────────
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
 DEFAULT_PROMPTS = {
@@ -135,6 +135,25 @@ iframe { border-radius: 12px !important; }
 [data-testid="stAlert"] { border-radius: 10px !important; }
 #MainMenu, footer { visibility: hidden; }
 .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+.show-more-btn button {
+    background: transparent !important;
+    border: 1px solid var(--border) !important;
+    color: var(--muted) !important;
+    font-size: 0.8rem !important;
+    padding: 0.3rem 1rem !important;
+    border-radius: 8px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+    transition: border-color .2s, color .2s !important;
+}
+.show-more-btn button:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    background: transparent !important;
+    opacity: 1 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -174,6 +193,35 @@ def df_to_csv_bytes(df: pd.DataFrame) -> bytes:
     return buf.getvalue().encode("utf-8")
 
 
+def render_table(df: pd.DataFrame) -> str:
+    def render_row(row):
+        parts = []
+        for col in df.columns:
+            val = row[col]
+            if col == "sentiment":
+                cls = sentiment_color(str(val))
+                parts.append(f'<td style="padding:8px 12px;"><span class="{cls}">{val}</span></td>')
+            else:
+                parts.append(f'<td style="color:var(--text);font-size:.85rem;padding:8px 12px;">{val}</td>')
+        return "<tr>" + "".join(parts) + "</tr>"
+
+    headers = "".join(
+        f'<th style="text-align:left;padding:8px 12px;color:var(--muted);font-family:\'Syne\',sans-serif;'
+        f'font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--border);">'
+        f'{c}</th>'
+        for c in df.columns
+    )
+    rows_html = "\n".join(render_row(row) for _, row in df.iterrows())
+    return f"""
+    <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border);background:var(--surface);margin:1rem 0;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>{headers}</tr></thead>
+        <tbody>{rows_html}</tbody>
+      </table>
+    </div>
+    """
+
+
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<div class="hero-title" style="font-size:1.5rem;text-align:center;">✦ Review Analyzer</div>', unsafe_allow_html=True)
@@ -194,15 +242,15 @@ with st.sidebar:
     need_sentiment = st.checkbox("✦ Sentiment Analysis", value=True)
 
     st.markdown('<div class="sidebar-section">Row Limit</div>', unsafe_allow_html=True)
-    
     row_limit = st.number_input(
-    "Max rows to analyze",
-    min_value=1,
-    max_value=100000,
-    value=10,
-    step=1,
-    help="Limit rows to control API cost."
-)
+        "Max rows to analyze",
+        min_value=1,
+        max_value=100000,
+        value=10,
+        step=1,
+        help="Limit rows to control API cost."
+    )
+
 
 # ─── Main area ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -248,7 +296,7 @@ if uploaded_file:
         st.markdown(f'<div class="card"><div class="card-label">Columns</div><div class="card-value">{len(raw_df.columns)}</div></div>', unsafe_allow_html=True)
 
     with st.expander("Original Data Preview", expanded=True):
-        st.dataframe(raw_df, use_container_width=True, height=220, hide_index=False)
+        st.dataframe(raw_df.rename(index=lambda x: x + 1), use_container_width=True, height=220)
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
@@ -297,18 +345,19 @@ if uploaded_file:
         if need_summary:   result_df["summary"]   = summaries
         if need_sentiment: result_df["sentiment"] = sentiments
 
-        st.session_state["result_df"] = result_df
-        st.session_state["raw_df"]    = raw_df
+        st.session_state["result_df"]    = result_df
+        st.session_state["raw_df"]       = raw_df
+        st.session_state["visible_rows"] = 5
 
 
 # ── Show results ───────────────────────────────────────────────────────────────
 if "result_df" in st.session_state:
     result_df = st.session_state["result_df"]
-    raw_df    = st.session_state["raw_df"]
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown("### Analysis Results")
 
+    # Sentiment summary cards
     if "sentiment" in result_df.columns:
         sent_counts = result_df["sentiment"].str.upper().str.strip().value_counts()
         chart_cols  = st.columns(len(sent_counts))
@@ -326,46 +375,39 @@ if "result_df" in st.session_state:
                     unsafe_allow_html=True,
                 )
 
-    def render_row(row):
-        parts = []
-        for col in result_df.columns:
-            val = row[col]
-            if col == "sentiment":
-                cls = sentiment_color(str(val))
-                parts.append(f'<td style="padding:8px 12px;"><span class="{cls}">{val}</span></td>')
-            else:
-                parts.append(f'<td style="color:var(--text);font-size:.85rem;padding:8px 12px;">{val}</td>')
-        return "<tr>" + "".join(parts) + "</tr>"
+    # Paginated table — show first N rows + Show more
+    visible = st.session_state.get("visible_rows", 5)
+    total   = len(result_df)
 
-    headers = "".join(
-        f'<th style="text-align:left;padding:8px 12px;color:var(--muted);font-family:\'Syne\',sans-serif;'
-        f'font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--border);">'
-        f'{c}</th>'
-        for c in result_df.columns
-    )
-    rows_html  = "\n".join(render_row(row) for _, row in result_df.iterrows())
-    table_html = f"""
-    <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border);background:var(--surface);margin:1rem 0;">
-      <table style="width:100%;border-collapse:collapse;">
-        <thead><tr>{headers}</tr></thead>
-        <tbody>{rows_html}</tbody>
-      </table>
-    </div>
-    """
-    st.markdown(table_html, unsafe_allow_html=True)
+    st.markdown(table_html := render_table(result_df.head(visible)), unsafe_allow_html=True)
 
+    if visible < total:
+        remaining = total - visible
+        next_load = min(10, remaining)
+        sm_col, _ = st.columns([1, 4])
+        with sm_col:
+            st.markdown('<div class="show-more-btn">', unsafe_allow_html=True)
+            if st.button(f"Show {next_load} more  ({remaining} remaining)"):
+                st.session_state["visible_rows"] = visible + 10
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(
+            f'<div style="color:var(--muted);font-size:.8rem;margin-top:.5rem;">Showing all {total} rows</div>',
+            unsafe_allow_html=True,
+        )
+
+    # Download — analyzed only
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown("### Download Results")
 
-    dl1, dl2 = st.columns(2)
-    with dl1:
-        st.markdown("**Analyzed Data** *(with AI columns)*")
-        st.download_button("Download Analyzed CSV", data=df_to_csv_bytes(result_df),
-                           file_name="analyzed_reviews.csv", mime="text/csv", use_container_width=True)
-    with dl2:
-        st.markdown("**Original Data** *(unmodified)*")
-        st.download_button("Download Original CSV", data=df_to_csv_bytes(raw_df),
-                           file_name="original_reviews.csv", mime="text/csv", use_container_width=True)
+    st.download_button(
+        "Download Analyzed CSV",
+        data=df_to_csv_bytes(result_df),
+        file_name="analyzed_reviews.csv",
+        mime="text/csv",
+        use_container_width=False,
+    )
 
 else:
     st.markdown("""
