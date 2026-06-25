@@ -11,7 +11,7 @@ st.set_page_config(
     page_title="Review Analyzer",
     page_icon="✦",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 # ─── Load env (works locally; on Streamlit Cloud use Secrets) ─────────────────
@@ -196,6 +196,8 @@ with st.sidebar:
     st.markdown('<div class="sidebar-section">Row Limit</div>', unsafe_allow_html=True)
     row_limit = st.slider("Max rows to analyze", min_value=1, max_value=100000, value=10,
                           help="Limit rows to control API cost.")
+    row_limit = st.number_input("Or type a number directly", min_value=1, max_value=100000,
+                                value=row_limit, step=1)
 
 
 # ─── Main area ────────────────────────────────────────────────────────────────
@@ -263,7 +265,7 @@ if uploaded_file:
         df_work  = raw_df.head(analyze_rows).copy()
         topics, summaries, sentiments = [], [], []
 
-        st.markdown("#### Analyzing reviews…")
+        st.markdown("#### Analyzing reviews...")
         progress_bar = st.progress(0)
         status_text  = st.empty()
 
@@ -271,20 +273,20 @@ if uploaded_file:
             user_prompt = PROMPTS["user"].format(review=review)
 
             if need_topic:
-                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · extracting topic…</span>', unsafe_allow_html=True)
+                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · extracting topic...</span>', unsafe_allow_html=True)
                 topics.append(ask_llm(client, user_prompt, PROMPTS["topic"], model_input))
 
             if need_summary:
-                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · summarizing…</span>', unsafe_allow_html=True)
+                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · summarizing...</span>', unsafe_allow_html=True)
                 summaries.append(ask_llm(client, user_prompt, PROMPTS["summary"], model_input))
 
             if need_sentiment:
-                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · classifying sentiment…</span>', unsafe_allow_html=True)
+                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · classifying sentiment...</span>', unsafe_allow_html=True)
                 sentiments.append(ask_llm(client, user_prompt, PROMPTS["sentiment"], model_input))
 
             progress_bar.progress(min((i + 1) / analyze_rows, 1.0))
 
-        status_text.markdown('<span style="color:var(--positive);font-size:.85rem;">✓ Analysis complete!</span>', unsafe_allow_html=True)
+        status_text.markdown('<span style="color:var(--positive);font-size:.85rem;">Analysis complete!</span>', unsafe_allow_html=True)
 
         result_df = df_work.copy()
         if need_topic:     result_df["topic"]     = topics
@@ -349,16 +351,16 @@ if "result_df" in st.session_state:
     st.markdown(table_html, unsafe_allow_html=True)
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    st.markdown("### ⬇️ Download Results")
+    st.markdown("### Download Results")
 
     dl1, dl2 = st.columns(2)
     with dl1:
         st.markdown("**Analyzed Data** *(with AI columns)*")
-        st.download_button("⬇  Download Analyzed CSV", data=df_to_csv_bytes(result_df),
+        st.download_button("Download Analyzed CSV", data=df_to_csv_bytes(result_df),
                            file_name="analyzed_reviews.csv", mime="text/csv", use_container_width=True)
     with dl2:
         st.markdown("**Original Data** *(unmodified)*")
-        st.download_button("⬇  Download Original CSV", data=df_to_csv_bytes(raw_df),
+        st.download_button("Download Original CSV", data=df_to_csv_bytes(raw_df),
                            file_name="original_reviews.csv", mime="text/csv", use_container_width=True)
 
 else:
