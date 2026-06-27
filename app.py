@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 from openai import OpenAI, APIConnectionError, AuthenticationError
 from dotenv import load_dotenv
+import asyncio
+from openai import AsyncOpenAI
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -315,7 +317,6 @@ if uploaded_file:
             st.error("Please enter your OpenAI API Key in the sidebar.")
             st.stop()
 
-        client   = OpenAI(api_key=api_key_input)
         df_work = raw_df.iloc[row_start - 1 : row_end].copy()
         topics, summaries, sentiments = [], [], []
 
@@ -323,22 +324,52 @@ if uploaded_file:
         progress_bar = st.progress(0)
         status_text  = st.empty()
 
-        for i, review in enumerate(df_work["review"]):
+        
+
+        async def ask_llm_async(aclient, user_content, system_content, model, max_tokens=500):
+            try:
+                resp = await aclient.chat.completions.create(
+                    model=model,
+                    temperature=0.5,
+                    max_completion_tokens=max_tokens,
+                    messages=[
+                        {"role": "system", "content": system_content},
+                        {"role": "user",   "content": user_content},
+                    ],
+                )
+                return resp.choices[0].message.content.strip()
+            except Exception as e:
+                return f"Error: {e}"
+
+        async def enrich_review_async(aclient, review, model):
             user_prompt = PROMPTS["user"].format(review=review)
+            tasks = []
+            if need_topic:    tasks.append(ask_llm_async(aclient, user_prompt, PROMPTS["topic"],     model))
+            if need_summary:  tasks.append(ask_llm_async(aclient, user_prompt, PROMPTS["summary"],   model))
+            if need_sentiment:tasks.append(ask_llm_async(aclient, user_prompt, PROMPTS["sentiment"], model))
+            results = await asyncio.gather(*tasks)
+            idx = 0
+            topic = results[idx] if need_topic    else None; idx += need_topic
+            summ  = results[idx] if need_summary  else None; idx += need_summary
+            sent  = results[idx] if need_sentiment else None
+            return topic, summ, sent
 
-            if need_topic:
-                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · extracting topic...</span>', unsafe_allow_html=True)
-                topics.append(ask_llm(client, user_prompt, PROMPTS["topic"], model_input))
+        async def run_analysis(reviews, model):
+            aclient = AsyncOpenAI(api_key=api_key_input)
+            sem = asyncio.Semaphore(20)
+            async def bounded(review):
+                async with sem:
+                    return await enrich_review_async(aclient, review, model)
+            return await asyncio.gather(*[bounded(r) for r in reviews])
 
-            if need_summary:
-                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · summarizing...</span>', unsafe_allow_html=True)
-                summaries.append(ask_llm(client, user_prompt, PROMPTS["summary"], model_input))
+        results = asyncio.run(run_analysis(df_work["review"].tolist(), model_input))
 
-            if need_sentiment:
-                status_text.markdown(f'<span style="color:var(--muted);font-size:.85rem;">Row {i+1}/{analyze_rows} · classifying sentiment...</span>', unsafe_allow_html=True)
-                sentiments.append(ask_llm(client, user_prompt, PROMPTS["sentiment"], model_input))
+        topics     = [r[0] for r in results if need_topic]     if need_topic     else []
+        summaries  = [r[1] for r in results if need_summary]   if need_summary   else []
+        sentiments = [r[2] for r in results if need_sentiment] if need_sentiment else []
 
-            progress_bar.progress(min((i + 1) / analyze_rows, 1.0))
+        progress_bar.progress(1.0)
+        status_text.markdown('<span style="color:var(--positive);font-size:.85rem;">Analysis complete!</span>', unsafe_allow_html=True)
 
         status_text.markdown('<span style="color:var(--positive);font-size:.85rem;">Analysis complete!</span>', unsafe_allow_html=True)
 
