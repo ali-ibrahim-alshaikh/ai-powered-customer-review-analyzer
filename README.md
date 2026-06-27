@@ -1,4 +1,4 @@
-# 🧠 AI-Powered Customer Review Analyzer
+# AI-Powered Customer Review Analyzer
 
 > Automatically extract **topics**, classify **sentiment**, and generate **summaries** from customer reviews using OpenAI's LLMs — with both a CLI pipeline and an interactive Streamlit web interface.
 
@@ -10,7 +10,7 @@
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Live Demo](#live-demo)
@@ -67,7 +67,7 @@ The project supports two modes of operation:
 
 The following diagram illustrates how data flows through the system — from raw input, through the LLM pipeline, to enriched output.
 
-![Architecture Diagram](assests/AI_Review_Analysis_Pipeline_SME.drawio.png)
+![Architecture Diagram](assets/AI_Review_Analysis_Pipeline.drawio.png)
 
 > **Why separate API calls per task?** Bundling topic + sentiment + summary into one prompt causes the model to trade off between tasks and produce lower-quality results for each. Separate calls with focused system prompts yield more consistent, structured outputs — at the cost of up to 3× the token usage per review.                          
 
