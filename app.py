@@ -414,7 +414,9 @@ if "result_df" in st.session_state:
     if "current_page" not in st.session_state:
         st.session_state["current_page"] = 1
 
-    current_page = st.session_state["current_page"]
+    current_page = min(st.session_state["current_page"], total_pages)
+    st.session_state["current_page"] = current_page
+    
     start_idx    = (current_page - 1) * ROWS_PER_PAGE
     end_idx      = min(start_idx + ROWS_PER_PAGE, total)
     page_df      = result_df.iloc[start_idx:end_idx]
