@@ -355,7 +355,6 @@ if "result_df" in st.session_state:
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown("### Analysis Results")
 
-    # Sentiment summary cards
     if "sentiment" in result_df.columns:
         sent_counts = result_df["sentiment"].str.upper().str.strip().value_counts()
         chart_cols  = st.columns(len(sent_counts))
@@ -373,29 +372,102 @@ if "result_df" in st.session_state:
                     unsafe_allow_html=True,
                 )
 
-    # Paginated table — show first N rows + Show more
-    visible = st.session_state.get("visible_rows", 5)
-    total   = len(result_df)
+    ROWS_PER_PAGE = 5
+    total         = len(result_df)
+    total_pages   = max(1, -(-total // ROWS_PER_PAGE))
 
-    st.markdown(table_html := render_table(result_df.head(visible)), unsafe_allow_html=True)
+    if "current_page" not in st.session_state:
+        st.session_state["current_page"] = 1
 
-    if visible < total:
-        remaining = total - visible
-        next_load = min(10, remaining)
-        sm_col, _ = st.columns([1, 4])
-        with sm_col:
-            st.markdown('<div class="show-more-btn">', unsafe_allow_html=True)
-            if st.button(f"Show {next_load} more  ({remaining} remaining)"):
-                st.session_state["visible_rows"] = visible + 10
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(
-            f'<div style="color:var(--muted);font-size:.8rem;margin-top:.5rem;">Showing all {total} rows</div>',
-            unsafe_allow_html=True,
-        )
+    current_page = st.session_state["current_page"]
+    start_idx    = (current_page - 1) * ROWS_PER_PAGE
+    end_idx      = min(start_idx + ROWS_PER_PAGE, total)
+    page_df      = result_df.iloc[start_idx:end_idx]
 
-    # Download — analyzed only
+    st.markdown(render_table(page_df), unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="color:var(--muted);font-size:.8rem;margin-bottom:.5rem;">Showing rows {start_idx+1}–{end_idx} of {total}</div>',
+        unsafe_allow_html=True,
+    )
+
+    left_col, _ = st.columns([3, 7])
+
+    with left_col:
+        num_pages = min(total_pages, 10)
+
+        page_cols = st.columns([5] * num_pages + [20])
+
+        for i, col in enumerate(page_cols[:-1]):
+            page_num = i + 1
+
+            with col:
+                is_active = page_num == current_page
+
+                btn_style = (
+                    "background:linear-gradient(135deg,var(--accent),var(--accent2))!important;"
+                    "color:#fff!important;"
+                ) if is_active else ""
+
+                st.markdown(
+    f"""
+    <style>
+    .page-btn-{page_num} {{
+        display:inline-block;
+    }}
+
+    .page-btn-{page_num} div[data-testid="stButton"] {{
+        width:30px!important;
+    }}
+
+    .page-btn-{page_num} button {{
+        width:30px!important;
+        min-width:30px!important;
+        height:30px!important;
+        min-height:30px!important;
+        padding:0!important;
+        font-size:12px!important;
+        border-radius:6px!important;
+        {btn_style}
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+                
+                st.markdown(
+                    f"""
+                    <style>
+                    .page-btn-{page_num} {{
+                        display:inline-block;
+                    }}
+
+                    .page-btn-{page_num} div[data-testid="stButton"] {{
+                        width:30px!important;
+                    }}
+
+                    .page-btn-{page_num} button {{
+                        width:30px!important;
+                        min-width:30px!important;
+                        height:30px!important;
+                        min-height:30px!important;
+                        padding:0!important;
+                        font-size:12px!important;
+                        border-radius:6px!important;
+                        {btn_style}
+                    }}
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+)
+
+                st.markdown(f'<div class="page-btn-{page_num}">', unsafe_allow_html=True)
+
+                if st.button(str(page_num), key=f"page_{page_num}"):
+                    st.session_state["current_page"] = page_num
+                    st.rerun()
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown("### Download Results")
 
@@ -406,7 +478,7 @@ if "result_df" in st.session_state:
         mime="text/csv",
         use_container_width=False,
     )
-
+    
 else:
     st.markdown("""
     <div style="text-align:center;padding:4rem 1rem;color:#6B6F84;">

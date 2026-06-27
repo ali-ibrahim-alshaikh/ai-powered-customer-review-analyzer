@@ -1,9 +1,7 @@
-from src.prompt_variables import *
 from pathlib import Path
-from src.llm_client import ask_llm
 import pandas as pd
 
-
+from src.ai_enrichment import enrich_review
 PROJECT_ROOT = Path(__file__).parent.parent
 
 data_file_path = PROJECT_ROOT / 'data' / 'customer_review.csv'
@@ -37,51 +35,19 @@ def get_output_filename():
             print(f'The {name_new_file} was created')
             return name_new_file
 
-def analyze_review(
-        need_topics:bool,
-        need_summaries:bool,
-        need_sentiment:bool,
-        df
-        
-):
+def analyze_review(df):
 
-    topics = []
-    summaries = []
-    sentiments = []
-
+    results = []
+    
     for review in df['review']:
 
-        user_prompt = user_template.format(review=review)
-        if need_topics:
-            topic = ask_llm(
-                user_content=user_prompt,
-                system_content=topic_extraction_prompt
-            )
-            topics.append(topic)
-            
+        results.append(enrich_review(review=review))
 
-        if need_summaries:
-            summary = ask_llm(
-                user_content=user_prompt,
-                system_content=summarize_reviews_prompt
-            )
-            summaries.append(summary)
+    df['topic'] = [r.get('topic') for r in results]
+    df['summary'] = [r.get('summary') for r in results]
+    df['sentiment'] = [r.get('sentiment') for r in results]
 
-        if need_sentiment:
-            sentiment = ask_llm(
-                user_content=user_prompt,
-                system_content=sentiment_analysis_prompt
-            )
-            sentiments.append(sentiment)
-        
-    if need_topics:
-        df['topic'] = topics
-
-    if need_summaries:
-        df['summary'] = summaries
-        
-    if need_sentiment:
-        df['sentiment'] = sentiments
+    return df
 
 def save_csv(df, output_file_name):
     df.to_csv(

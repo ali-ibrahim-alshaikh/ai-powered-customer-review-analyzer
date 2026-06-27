@@ -29,9 +29,6 @@ def main():
 
 
         analyze_review(
-            need_topics=True, 
-            need_sentiment=True, 
-            need_summaries=True, 
             df=df
         )
         
