@@ -366,5 +366,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Author
 
-**Ali Alshaikh**  
+**Ali Ibrahim Alshaikh**  
 [GitHub](https://github.com/ali-ibrahim-alshaikh) · [LinkedIn](https://www.linkedin.com/in/ali-alshaikh-b951402b7/)
