@@ -390,83 +390,19 @@ if "result_df" in st.session_state:
         unsafe_allow_html=True,
     )
 
-    left_col, _ = st.columns([3, 7])
-
-    with left_col:
-        num_pages = min(total_pages, 10)
-
-        page_cols = st.columns([5] * num_pages + [20])
-
-        for i, col in enumerate(page_cols[:-1]):
-            page_num = i + 1
-
-            with col:
-                is_active = page_num == current_page
-
-                btn_style = (
-                    "background:linear-gradient(135deg,var(--accent),var(--accent2))!important;"
-                    "color:#fff!important;"
-                ) if is_active else ""
-
-                st.markdown(
-    f"""
-    <style>
-    .page-btn-{page_num} {{
-        display:inline-block;
-    }}
-
-    .page-btn-{page_num} div[data-testid="stButton"] {{
-        width:30px!important;
-    }}
-
-    .page-btn-{page_num} button {{
-        width:30px!important;
-        min-width:30px!important;
-        height:30px!important;
-        min-height:30px!important;
-        padding:0!important;
-        font-size:12px!important;
-        border-radius:6px!important;
-        {btn_style}
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-                
-                st.markdown(
-                    f"""
-                    <style>
-                    .page-btn-{page_num} {{
-                        display:inline-block;
-                    }}
-
-                    .page-btn-{page_num} div[data-testid="stButton"] {{
-                        width:30px!important;
-                    }}
-
-                    .page-btn-{page_num} button {{
-                        width:30px!important;
-                        min-width:30px!important;
-                        height:30px!important;
-                        min-height:30px!important;
-                        padding:0!important;
-                        font-size:12px!important;
-                        border-radius:6px!important;
-                        {btn_style}
-                    }}
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-)
-
-                st.markdown(f'<div class="page-btn-{page_num}">', unsafe_allow_html=True)
-
-                if st.button(str(page_num), key=f"page_{page_num}"):
-                    st.session_state["current_page"] = page_num
-                    st.rerun()
-
-                st.markdown("</div>", unsafe_allow_html=True)
+    MAX_COLS = 20
+    if total_pages > 1:
+        col_pg, _ = st.columns([2, 8])
+        with col_pg:
+            selected_page = st.select_slider(
+                "Page",
+                options=list(range(1, total_pages + 1)),
+                value=current_page,
+                label_visibility="collapsed"
+            )
+        if selected_page != current_page:
+            st.session_state["current_page"] = selected_page
+            st.rerun()
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown("### Download Results")
