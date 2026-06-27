@@ -266,9 +266,13 @@ uploaded_file = st.file_uploader(
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ── File uploaded ──────────────────────────────────────────────────────────────
+@st.cache_data
+def load_csv(file):
+    return pd.read_csv(file)
+
 if uploaded_file:
     try:
-        raw_df = pd.read_csv(uploaded_file)
+        raw_df = load_csv(uploaded_file)
     except Exception as e:
         st.error(f"Could not read CSV: {e}")
         st.stop()
