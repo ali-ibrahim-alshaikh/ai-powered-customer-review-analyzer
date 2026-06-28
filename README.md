@@ -26,7 +26,6 @@
 - [Usage](#usage)
   - [CLI Mode](#cli-mode)
   - [Streamlit Web App](#streamlit-web-app)
-- [Web App User Guide](#web-app-user-guide)
 - [Prompt Engineering](#prompt-engineering)
 - [Input Format](#input-format)
 - [Output Format](#output-format)
@@ -153,7 +152,8 @@ ai_powered_customer_review_analyzer/
 │       └── review.txt             # User prompt template: injects {review} variable
 │
 ├── src/
-│   ├── csv_processor.py           # CSV reading, analysis orchestration, and saving
+│   ├── ai_enrichment.py           # Per-review enrichment: builds prompt, calls topic/sentiment/summary
+│   ├── csv_processor.py           # CSV reading, loops rows, delegates to ai_enrichment, saves output
 │   ├── env_validator.py           # Validates required environment variables
 │   ├── error_handler.py           # Centralized error handling for OpenAI and file errors
 │   ├── llm_client.py              # OpenAI API client and completion logic
@@ -175,6 +175,7 @@ ai_powered_customer_review_analyzer/
 ## Features
 
 - **Modular architecture** — each concern (LLM calls, CSV processing, error handling, prompt loading) is cleanly separated into its own module with a single responsibility
+- **Single-responsibility enrichment module** — `ai_enrichment.py` acts as the sole entry point per review, returning a structured dict and keeping `csv_processor` free of LLM logic
 - **Prompt-file-driven** — all system and user prompts are stored as `.txt` files, enabling iteration on prompt quality without touching Python code
 - **Focused single-task prompts** — each analysis (topic / sentiment / summary) uses a dedicated system prompt and API call for higher output quality
 - **Flexible analysis** — any combination of the three analyses can be enabled or disabled independently
@@ -274,64 +275,6 @@ The web app provides:
 - **Paginated Results** — view 5 rows per page with numbered pagination buttons to navigate large datasets
 - **Sentiment Cards** — visual breakdown of POSITIVE / NEGATIVE / NEUTRAL distribution
 - **Download Button** — download the analyzed CSV directly to your browser
-
----
-
-## Web App User Guide
-
-A step-by-step guide for business users accessing the app via the hosted Streamlit interface.
-
-### Step 1 — Enter Your API Credentials
-In the **left sidebar**, under **API Configuration**:
-- **OpenAI API Key** — paste your key from [platform.openai.com/api-keys](https://platform.openai.com/api-keys). It starts with `sk-proj-...` and is never stored or logged.
-- **Model** — enter the model name you want to use. Recommended: `gpt-4o-mini` (fast and cost-efficient) or `gpt-4o` (higher accuracy).
-
-### Step 2 — Select Analysis Options
-Under **Analysis Options**, check the analyses you need:
-- ✦ **Topic Extraction** — identifies the main subject of each review
-- ✦ **Review Summary** — condenses each review into one sentence
-- ✦ **Sentiment Analysis** — classifies each review as POSITIVE, NEGATIVE, or NEUTRAL
-
-You can enable any combination of the three.
-
-### Step 3 — Set the Row Range
-Under **Row Range**, specify which rows of your CSV to analyze:
-- **From row** — the first row to include (e.g. `1`)
-- **To row** — the last row to include (e.g. `100`)
-
-> **Cost tip:** Each row generates up to 3 API calls. Start with a small range (e.g. 1–50) to validate results before running the full dataset.
-
-### Step 4 — Upload Your CSV File
-In the main area, click **Drop your CSV file here** or drag and drop your file.
-
-Requirements:
-- Format: `.csv`
-- Must contain a column named exactly `review` (case-sensitive)
-- Any additional columns (e.g. `date`, `product_id`, `rating`) will be preserved in the output
-
-After uploading, you will see:
-- A summary card showing total reviews, rows to analyze, and column count
-- A preview of the original data
-
-### Step 5 — Run the Analysis
-Click **▶ Run Analysis**. A progress bar will show the status row by row. Do not close the browser tab while analysis is running.
-
-### Step 6 — Review the Results
-Once complete:
-- A **sentiment summary** appears showing the percentage breakdown of POSITIVE / NEGATIVE / NEUTRAL
-- The **results table** shows all analyzed rows with their topic, summary, and sentiment
-- Use the **page slider** (◀ ▶) to navigate between pages of results (5 rows per page)
-
-### Step 7 — Download the Results
-Click **Download Analyzed CSV** to save the enriched file to your device.
-
-The output file contains all original columns plus:
-
-| New Column | Description |
-|---|---|
-| `topic` | Main subject of the review |
-| `summary` | One-sentence condensed version |
-| `sentiment` | `POSITIVE`, `NEGATIVE`, or `NEUTRAL` |
 
 ---
 
