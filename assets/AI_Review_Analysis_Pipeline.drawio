@@ -1,11 +1,11 @@
 <mxfile host="app.diagrams.net" agent="ChatGPT">
   <diagram name="AI Review Analysis Pipeline" id="0">
-    <mxGraphModel dx="983" dy="645" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1557" dy="1922" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=28;fontStyle=1;fontColor=#1F2937;align=center;verticalAlign=middle;" value="AI Review Analysis Pipeline" vertex="1">
-          <mxGeometry height="40" width="650" x="360" y="20" as="geometry" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=28;fontStyle=1;fontColor=#1F2937;align=center;verticalAlign=middle;" value="AI-Powered Customer Review Analyzer" vertex="1">
+          <mxGeometry height="40" width="650" x="443.75" y="-10" as="geometry" />
         </mxCell>
         <mxCell id="s1_txt" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;fontColor=#2563EB;" value="1. Data &amp;amp; Config Layer" vertex="1">
           <mxGeometry height="26" width="210" x="30" y="98" as="geometry" />
